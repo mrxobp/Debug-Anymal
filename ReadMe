@@ -1,21 +1,25 @@
-# 📄 README — Modifications Oscillator Controller & Incident
-
-## 1. Description
-
-Ce README contient :
-
-- Les **modifications apportées** au code de base (`OscillatorController`)
-- La **procédure de déploiement réel** utilisée
-- Le **déroulement de l’incident** observé
+# 📄 README — Oscillator Controller & Incident
 
 ---
 
-# 2. MODIFICATIONS
+## 🔎 1. Description
 
-Les modifications du code sont présentées par bloc pour le fichier `OscillatorController.cpp` :
+Ce README contient :
+
+- les modifications apportées au OscillatorController
+- la procédure de déploiement réel
+- le déroulement de l’incident
+
+---
+
+## ⚙️ 2. Modifications
+
+Les modifications sont organisées selon les blocs du fichier :
+
+OscillatorController.cpp
 
 1. CREATION OF CONTROLLER  
-2. INITIALIZATION OF CONTROLLER  
+2. INITIALIZATION  
 3. ADVANCE LOOP  
 4. APPLY COMMAND  
 5. OSCILLATION  
@@ -25,260 +29,166 @@ Les modifications du code sont présentées par bloc pour le fichier `Oscillator
 
 ---
 
-## 2.1 CREATION OF CONTROLLER
+### 2.1 — CREATION OF CONTROLLER
 
-Les deux state checks suivants ont été supprimés :
+Suppression des checks :
 
-```
-StateStatusCheck
-BaseStateCheck
-```
+StateStatusCheck  
+BaseStateCheck  
 
-Code concerné :
+Code supprimé :
 
-```
-getInitialStateChecker().addStateCheck("stateStatus", ...);
-getStateChecker().addStateCheck("baseState", ...);
-```
+getInitialStateChecker().addStateCheck("stateStatus", ...);  
+getStateChecker().addStateCheck("baseState", ...);  
 
-### Raison
+Raison :
 
-Ces checks empêchaient le démarrage du contrôleur lorsque le robot est **suspendu en l’air**, ce qui est nécessaire pour nos expériences d’oscillation.
+Le contrôleur ne démarrait pas lorsque le robot est suspendu.  
+Les oscillations sont lancées dans cette configuration.
 
-⚠️ Implication :  
-Le contrôleur peut maintenant démarrer sans vérification complète de l’état du robot.
+⚠️ Le contrôleur peut maintenant démarrer sans vérification complète.
 
 ---
 
-## 2.2 INITIALIZATION OF CONTROLLER
+### 2.2 — INITIALIZATION
 
-### Ajouts :
+Ajouts :
 
-- Création de :
-  - `gotoDefaultStartPos_`
-  - `gotoDefaultTargetPos_`
+gotoDefaultStartPos_  
+gotoDefaultTargetPos_  
 
-➡️ Permet de définir une **position de départ cible** avant oscillation.
+Permet de définir une pose de départ avant oscillation.
 
----
+Logging CSV ajouté avec :
 
-### Ajout d’un logging CSV :
-
-Création d’un fichier CSV permettant d’enregistrer :
-
-- le temps `t`
-- le pas de temps `dt`
-- la valeur du chirp
-- les positions mesurées des joints
-- les positions désirées des joints
+- temps t  
+- dt  
+- chirp  
+- positions mesurées  
+- positions désirées  
 
 ---
 
-## 2.3 ADVANCE LOOP
+### 2.3 — ADVANCE LOOP
 
-### Modifications principales :
-
-1. **Écriture des données dans le CSV**
-   - Logging effectué directement dans la boucle de contrôle
-
-2. **Gestion du reset**
-   - Reset après :
-     - atteinte de la pose par défaut
-     - reset du contrôleur
-
-3. **Initialisation au premier passage**
-   - Sauvegarde de la position initiale
-   - Lancement du `GoToDefault`
+- écriture CSV dans la boucle  
+- gestion du reset  
+- initialisation première itération + GoToDefault  
 
 ---
 
-## 2.4 APPLY COMMAND
+### 2.4 — APPLY COMMAND
 
-Fonction clé :
-
-```
 setJointsCommand(dt)
-```
 
-Permet de choisir dynamiquement entre :
+Choix entre :
 
-- déplacement vers la pose par défaut  
-- oscillation sinus  
-- oscillation chirp (PACE)  
-
----
-
-## 2.5 OSCILLATION
-
-Deux types d’oscillation :
-
-### 1. Oscillation sinus classique
-- Fonction : `JointsOscillation()`
-- Fréquence fixe
-
-### 2. Oscillation chirp (PACE)
-- Fonction : `calculateOscillationPACE()`
-- Fréquence croissante :
-  - de 0.1 Hz à 2 Hz
-  - sur 20 secondes
+- default  
+- sinus  
+- chirp  
 
 ---
 
-## 2.6 DEFAULT
+### 2.5 — OSCILLATION
 
-Fonction : `GoToDefault`
+Sinus : JointsOscillation()  
+Chirp : calculateOscillationPACE()  
 
-Permet de :
-
-- déplacer le robot vers une **pose cible**
-- de manière **lissée (interpolation)**
+0.1 → 2 Hz sur 20 s
 
 ---
 
-## 2.7 MOTION CONTROL MANAGER
+### 2.6 — DEFAULT
 
-Modification :
+GoToDefault
 
-- Suppression des modes :
-  - `bounce`
-  - autres modes inutiles
-
-- Conservation uniquement de :
-  - `oscillate`
+Interpolation vers pose cible
 
 ---
 
-## 2.8 AUXILIARY METHODS
+### 2.7 — MOTION CONTROL MANAGER
 
-Dans `OscillatorController.hpp` :
-
-- Ajout des variables nécessaires :
-  - logging
-  - oscillation
-  - gestion du default
-  - reset
+Suppression des autres modes  
+Conservation de oscillate
 
 ---
 
-# 3. PROCEDURE DE DEPLOIEMENT
+### 2.8 — AUXILIARY METHODS
 
-Procédure utilisée :
-
-1. Allumer le robot  
-2. Se connecter au WiFi du robot  
-3. Se connecter en SSH  
-4. Remplacer et compiler `OscillatorController`  
-5. Lancer via le **ANYmal Software Launcher**  
-6. Lever le robot puis le rebaisser  
-7. Accrocher le robot en l’air  
-8. Dans le Motion Control Manager :
-   - Reset controller  
-   - Manual play  
-   - Lancer `oscillator`  
-
-Environnement :
-
-- Release utilisée : **25.09**
+Ajout variables (logging, reset, etc.)
 
 ---
 
-# 4. DEROULEMENT DE L’INCIDENT
+## 🚀 3. Procédure
 
-## Contexte
+1. Allumer robot  
+2. WiFi  
+3. SSH  
+4. Compiler controller  
+5. ANYmal Software Launcher  
+6. Lever puis reposer  
+7. Suspendre robot  
+8. Manager :
+   - reset  
+   - manual play  
+   - oscillator  
 
-La veille :
-
-- Même code **sans logging CSV**
-- Utilisation de `JointsOscillation()` (sinus simple)
-- ✅ Fonctionnement normal
-
----
-
-## Changements introduits
-
-- Ajout du logging CSV  
-- Passage à l’oscillation chirp (`calculateOscillationPACE`)  
-
----
-
-## Comportement observé
-
-Lors du lancement du contrôleur :
-
-- Le robot s’est **mis à trembler immédiatement**
-- Il **n’a pas atteint la pose par défaut**
-- Il s’est **arrêté automatiquement (shutdown)** après ~3 secondes
+Version : 25.09
 
 ---
 
-## Comportement attendu
+## ⚠️ 4. Incident
 
-- Déplacement vers la pose par défaut  
-- Démarrage progressif de l’oscillation  
+Avant :
 
----
+- sans CSV  
+- sinus  
+- stable  
 
-# 5. POINTS ANORMAUX
+Après :
 
-- Le logging CSV **ne devrait pas** modifier le comportement du robot
-- L’oscillation chirp est **théoriquement proche** du sinus classique
-- Pourtant :
-  - comportement totalement différent
-  - instabilité immédiate
+- CSV  
+- chirp  
 
----
+Résultat :
 
-# 6. HYPOTHESES (IMPORTANT)
-
-### H1 — Impact du logging CSV
-- Écriture disque dans la boucle temps réel
-- Possible :
-  - latence
-  - jitter
-  - perturbation de `dt`
+- tremblement immédiat  
+- pas de default  
+- shutdown ~3s  
 
 ---
 
-### H2 — Chirp trop agressif
-- Fréquence monte jusqu’à 2 Hz
-- Peut générer :
-  - accélérations élevées
-  - instabilité
+## ❗ 5. Points anormaux
+
+- CSV ne devrait pas impacter  
+- chirp proche sinus  
+- mais comportement instable  
 
 ---
 
-### H3 — Suppression des sécurités
-- Plus de :
-  - `BaseStateCheck`
-  - `StateStatusCheck`
+## 🧠 6. Hypothèses
 
-➡️ Le contrôleur peut tourner dans un état non valide
-
----
-
-### H4 — Problème dans GoToDefault
-- Le robot ne passe pas par la phase initiale
-- Possible bug dans :
-  - timing
-  - reset
-  - transition
+H1 : logging perturbe timing  
+H2 : chirp trop agressif  
+H3 : sécurités supprimées  
+H4 : bug GoToDefault  
 
 ---
 
-# 7. QUESTIONS
+## ❓ 7. Questions
 
-- Est-ce que le logging dans la boucle `advance()` est autorisé ?
-- Quelle est la fréquence max recommandée pour ce type d’oscillation ?
-- Les gains doivent-ils être adaptés pour du chirp ?
-- Est-ce normal que `GoToDefault` soit bypass ?
-- Quelle condition déclenche le shutdown observé ?
+- logging OK dans advance ?  
+- limites fréquence ?  
+- gains adaptés ?  
+- GoToDefault bypass ?  
+- cause shutdown ?  
 
 ---
 
-# 8. CONCLUSION
+## 🧾 8. Conclusion
 
-Le problème semble venir d’une combinaison de :
+Problème probablement dû à :
 
-- perturbation temps réel (logging)
-- excitation trop agressive (chirp)
-- suppression des sécurités
+- timing  
+- chirp  
+- sécurité supprimée
