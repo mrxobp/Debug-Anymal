@@ -1,0 +1,49 @@
+# Make the base fixed (simulation / debug)
+load_anymal_description:
+ custom_parameters:
+   fix_base: true
+
+
+motion_control_manager:
+ available_controllers:
+   controllers:
+     oscillator:
+       emergency_controller: emergency_freeze
+       name: oscillator
+       plugin_name: anymal_ctrl_oscillator_ros::OscillatorControllerRos
+
+
+motion_state_deduction:
+ motion_transitioner:
+   initial_state: oscillate
+
+
+   motion_states:
+     oscillate:
+       direct_transit_state: ""
+
+
+   # Aucune transition: on reste en oscillate tout le temps
+   transitions: {}
+
+
+oscillator:
+ oscillate:
+   limits:
+     max_sagittal_velocity: 1.0
+     max_lateral_velocity: 0.0
+     max_angular_velocity: 0.0
+
+
+ base_amplitude: 0.02
+ max_amplitude: 0.10
+ frequency: 0.5
+ minimum_velocity_threshold: 0.001
+ max_velocity: 1.0
+
+
+ gains:
+   HAA: { p: 85.0, i: 0.0, d: 0.6 }
+   HFE: { p: 85.0, i: 0.0, d: 0.6 }
+   KFE: { p: 85.0, i: 0.0, d: 0.6 }
+

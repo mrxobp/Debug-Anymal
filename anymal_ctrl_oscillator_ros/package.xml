@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<package format="2">
+
+  <name>anymal_ctrl_oscillator_ros</name>
+  <version>0.1.0</version>
+  <description>ROS wrapper for anymal_ctrl_oscillator controller</description>
+
+  <license>Proprietary</license>
+  <author email="desteban@anybotics.com">Domingo Esteban</author>
+  <maintainer email="desteban@anybotics.com">Domingo Esteban</maintainer>
+  <maintainer email="psutter@anybotics.com">Pascal Sutter</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Direct dependencies -->
+  <depend>anymal_ctrl_oscillator</depend>
+  <depend>anymal_model</depend>
+  <depend>anymal_motion_control_ros</depend>
+  <depend>geometry_msgs</depend>
+  <depend>kindr_ros</depend>
+  <depend>message_logger</depend>
+  <depend>param_io</depend>
+  <depend>roscpp</depend>
+  <depend>signal_logger</depend>
+  
+  <!-- Plugin dependencies -->
+  <depend>dynamic_class_loader</depend>
+  <depend>robot_control</depend>
+
+  <!-- Build tools -->
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <!-- Test dependencies -->
+  <test_depend>rostest</test_depend>
+  <test_depend>cmake_code_coverage</test_depend>
+
+  <export>
+    <!-- Required: Enables dynamic loading by motion_control_manager -->
+    <robot_control plugin="${prefix}/robot_control_plugin.xml" />
+  </export>
+
+</package>

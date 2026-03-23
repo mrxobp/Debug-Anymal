@@ -1,0 +1,76 @@
+# README — Oscillator Controller Modifications & Incident Report
+
+## 1. Overview
+This document summarizes:
+- Code modifications
+- Deployment procedure
+- Incident description
+- Hypotheses and questions
+
+## 2. Code Modifications
+
+### Removed Safety Checks
+- StateStatusCheck
+- BaseStateCheck
+
+Reason: allow execution when robot is suspended.
+
+### Initialization
+- Added default pose targets
+- Added CSV logging of joint states
+
+### Advance Loop
+- Logging inside control loop
+- Reset handling
+- GoToDefault initialization
+
+### Oscillation Modes
+- Sinus (0.1 Hz)
+- Chirp (0.1 → 2 Hz over 20s)
+
+### Motion Manager
+- Only oscillate mode kept
+
+## 3. Deployment Procedure
+1. Power on robot
+2. Connect via WiFi + SSH
+3. Replace controller
+4. Launch ANYmal Software
+5. Suspend robot
+6. Run oscillator in manual mode
+
+## 4. Incident
+
+Expected:
+- Go to default pose
+- Start oscillation
+
+Observed:
+- Immediate trembling
+- No default pose reached
+- Shutdown after ~3s
+
+## 5. Differences vs Previous Run
+- Added CSV logging
+- Switched sinus → chirp
+
+## 6. Hypotheses
+- Logging breaks real-time loop
+- Chirp too aggressive
+- Safety checks removed
+- Gains not adapted
+
+## 7. Questions
+- Is logging in control loop safe?
+- Recommended limits for chirp?
+- Safe gains?
+- Cause of failsafe?
+
+## 8. Debug Plan
+- Remove logging
+- Limit frequency
+- Reduce gains
+- Re-enable checks
+
+## 9. Conclusion
+Likely combination of timing + excitation + safety removal.

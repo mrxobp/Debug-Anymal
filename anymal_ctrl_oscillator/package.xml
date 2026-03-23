@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>anymal_ctrl_oscillator</name>
+  <version>0.1.0</version>
+  <description>Implementation of oscillation controller for ANYmal.</description>
+
+  <license>Proprietary</license>
+  <author email="desteban@anybotics.com">Domingo Esteban</author>
+  <maintainer email="desteban@anybotics.com">Domingo Esteban</maintainer>
+  <maintainer email="psutter@anybotics.com">Pascal Sutter</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>acl_time</depend>
+  <depend>anymal_description</depend>
+  <depend>anymal_motion_control</depend>
+  <depend>anymal_model</depend>
+  <depend>message_logger</depend>
+  <depend>signal_logger</depend>
+
+  <test_depend>cmake_code_coverage</test_depend>
+  <test_depend>gtest</test_depend>
+</package>

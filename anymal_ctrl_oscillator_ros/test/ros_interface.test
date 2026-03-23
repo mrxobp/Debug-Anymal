@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+  <!-- Launch the testing counterpart ROS node -->
+  <test pkg="anymal_ctrl_oscillator_ros" type="test_anymal_ctrl_oscillator_ros" test-name="test_anymal_ctrl_oscillator_ros"
+        time-limit="100.0"/>
+</launch>

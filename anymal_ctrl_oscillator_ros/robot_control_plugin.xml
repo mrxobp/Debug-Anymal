@@ -1,0 +1,12 @@
+<!--
+  ROS plugin manifest file for controller discovery and loading.
+  This file tells the ANYmal motion control system:
+  1. Which library contains the controller (path)
+  2. Which class to instantiate (type)
+  3. What interface it implements (base_class_type)
+  The motion control manager uses this to find and load the controller at runtime.
+-->
+<library path="lib/libanymal_ctrl_oscillator_ros_plugin">
+  <class type="anymal_ctrl_oscillator_ros::OscillatorControllerRos" base_class_type="robot_control::ControllerInterface">
+  </class>
+</library>
