@@ -1,76 +1,284 @@
-# README — Oscillator Controller Modifications & Incident Report
+# 📄 README — Modifications Oscillator Controller & Incident
 
-## 1. Overview
-This document summarizes:
-- Code modifications
-- Deployment procedure
-- Incident description
-- Hypotheses and questions
+## 1. Description
 
-## 2. Code Modifications
+Ce README contient :
 
-### Removed Safety Checks
-- StateStatusCheck
-- BaseStateCheck
+- Les **modifications apportées** au code de base (`OscillatorController`)
+- La **procédure de déploiement réel** utilisée
+- Le **déroulement de l’incident** observé
 
-Reason: allow execution when robot is suspended.
+---
 
-### Initialization
-- Added default pose targets
-- Added CSV logging of joint states
+# 2. MODIFICATIONS
 
-### Advance Loop
-- Logging inside control loop
-- Reset handling
-- GoToDefault initialization
+Les modifications du code sont présentées par bloc pour le fichier `OscillatorController.cpp` :
 
-### Oscillation Modes
-- Sinus (0.1 Hz)
-- Chirp (0.1 → 2 Hz over 20s)
+1. CREATION OF CONTROLLER  
+2. INITIALIZATION OF CONTROLLER  
+3. ADVANCE LOOP  
+4. APPLY COMMAND  
+5. OSCILLATION  
+6. DEFAULT  
+7. MOTION CONTROL MANAGER  
+8. AUXILIARY METHODS  
 
-### Motion Manager
-- Only oscillate mode kept
+---
 
-## 3. Deployment Procedure
-1. Power on robot
-2. Connect via WiFi + SSH
-3. Replace controller
-4. Launch ANYmal Software
-5. Suspend robot
-6. Run oscillator in manual mode
+## 2.1 CREATION OF CONTROLLER
 
-## 4. Incident
+Les deux state checks suivants ont été supprimés :
 
-Expected:
-- Go to default pose
-- Start oscillation
+```
+StateStatusCheck
+BaseStateCheck
+```
 
-Observed:
-- Immediate trembling
-- No default pose reached
-- Shutdown after ~3s
+Code concerné :
 
-## 5. Differences vs Previous Run
-- Added CSV logging
-- Switched sinus → chirp
+```
+getInitialStateChecker().addStateCheck("stateStatus", ...);
+getStateChecker().addStateCheck("baseState", ...);
+```
 
-## 6. Hypotheses
-- Logging breaks real-time loop
-- Chirp too aggressive
-- Safety checks removed
-- Gains not adapted
+### Raison
 
-## 7. Questions
-- Is logging in control loop safe?
-- Recommended limits for chirp?
-- Safe gains?
-- Cause of failsafe?
+Ces checks empêchaient le démarrage du contrôleur lorsque le robot est **suspendu en l’air**, ce qui est nécessaire pour nos expériences d’oscillation.
 
-## 8. Debug Plan
-- Remove logging
-- Limit frequency
-- Reduce gains
-- Re-enable checks
+⚠️ Implication :  
+Le contrôleur peut maintenant démarrer sans vérification complète de l’état du robot.
 
-## 9. Conclusion
-Likely combination of timing + excitation + safety removal.
+---
+
+## 2.2 INITIALIZATION OF CONTROLLER
+
+### Ajouts :
+
+- Création de :
+  - `gotoDefaultStartPos_`
+  - `gotoDefaultTargetPos_`
+
+➡️ Permet de définir une **position de départ cible** avant oscillation.
+
+---
+
+### Ajout d’un logging CSV :
+
+Création d’un fichier CSV permettant d’enregistrer :
+
+- le temps `t`
+- le pas de temps `dt`
+- la valeur du chirp
+- les positions mesurées des joints
+- les positions désirées des joints
+
+---
+
+## 2.3 ADVANCE LOOP
+
+### Modifications principales :
+
+1. **Écriture des données dans le CSV**
+   - Logging effectué directement dans la boucle de contrôle
+
+2. **Gestion du reset**
+   - Reset après :
+     - atteinte de la pose par défaut
+     - reset du contrôleur
+
+3. **Initialisation au premier passage**
+   - Sauvegarde de la position initiale
+   - Lancement du `GoToDefault`
+
+---
+
+## 2.4 APPLY COMMAND
+
+Fonction clé :
+
+```
+setJointsCommand(dt)
+```
+
+Permet de choisir dynamiquement entre :
+
+- déplacement vers la pose par défaut  
+- oscillation sinus  
+- oscillation chirp (PACE)  
+
+---
+
+## 2.5 OSCILLATION
+
+Deux types d’oscillation :
+
+### 1. Oscillation sinus classique
+- Fonction : `JointsOscillation()`
+- Fréquence fixe
+
+### 2. Oscillation chirp (PACE)
+- Fonction : `calculateOscillationPACE()`
+- Fréquence croissante :
+  - de 0.1 Hz à 2 Hz
+  - sur 20 secondes
+
+---
+
+## 2.6 DEFAULT
+
+Fonction : `GoToDefault`
+
+Permet de :
+
+- déplacer le robot vers une **pose cible**
+- de manière **lissée (interpolation)**
+
+---
+
+## 2.7 MOTION CONTROL MANAGER
+
+Modification :
+
+- Suppression des modes :
+  - `bounce`
+  - autres modes inutiles
+
+- Conservation uniquement de :
+  - `oscillate`
+
+---
+
+## 2.8 AUXILIARY METHODS
+
+Dans `OscillatorController.hpp` :
+
+- Ajout des variables nécessaires :
+  - logging
+  - oscillation
+  - gestion du default
+  - reset
+
+---
+
+# 3. PROCEDURE DE DEPLOIEMENT
+
+Procédure utilisée :
+
+1. Allumer le robot  
+2. Se connecter au WiFi du robot  
+3. Se connecter en SSH  
+4. Remplacer et compiler `OscillatorController`  
+5. Lancer via le **ANYmal Software Launcher**  
+6. Lever le robot puis le rebaisser  
+7. Accrocher le robot en l’air  
+8. Dans le Motion Control Manager :
+   - Reset controller  
+   - Manual play  
+   - Lancer `oscillator`  
+
+Environnement :
+
+- Release utilisée : **25.09**
+
+---
+
+# 4. DEROULEMENT DE L’INCIDENT
+
+## Contexte
+
+La veille :
+
+- Même code **sans logging CSV**
+- Utilisation de `JointsOscillation()` (sinus simple)
+- ✅ Fonctionnement normal
+
+---
+
+## Changements introduits
+
+- Ajout du logging CSV  
+- Passage à l’oscillation chirp (`calculateOscillationPACE`)  
+
+---
+
+## Comportement observé
+
+Lors du lancement du contrôleur :
+
+- Le robot s’est **mis à trembler immédiatement**
+- Il **n’a pas atteint la pose par défaut**
+- Il s’est **arrêté automatiquement (shutdown)** après ~3 secondes
+
+---
+
+## Comportement attendu
+
+- Déplacement vers la pose par défaut  
+- Démarrage progressif de l’oscillation  
+
+---
+
+# 5. POINTS ANORMAUX
+
+- Le logging CSV **ne devrait pas** modifier le comportement du robot
+- L’oscillation chirp est **théoriquement proche** du sinus classique
+- Pourtant :
+  - comportement totalement différent
+  - instabilité immédiate
+
+---
+
+# 6. HYPOTHESES (IMPORTANT)
+
+### H1 — Impact du logging CSV
+- Écriture disque dans la boucle temps réel
+- Possible :
+  - latence
+  - jitter
+  - perturbation de `dt`
+
+---
+
+### H2 — Chirp trop agressif
+- Fréquence monte jusqu’à 2 Hz
+- Peut générer :
+  - accélérations élevées
+  - instabilité
+
+---
+
+### H3 — Suppression des sécurités
+- Plus de :
+  - `BaseStateCheck`
+  - `StateStatusCheck`
+
+➡️ Le contrôleur peut tourner dans un état non valide
+
+---
+
+### H4 — Problème dans GoToDefault
+- Le robot ne passe pas par la phase initiale
+- Possible bug dans :
+  - timing
+  - reset
+  - transition
+
+---
+
+# 7. QUESTIONS
+
+- Est-ce que le logging dans la boucle `advance()` est autorisé ?
+- Quelle est la fréquence max recommandée pour ce type d’oscillation ?
+- Les gains doivent-ils être adaptés pour du chirp ?
+- Est-ce normal que `GoToDefault` soit bypass ?
+- Quelle condition déclenche le shutdown observé ?
+
+---
+
+# 8. CONCLUSION
+
+Le problème semble venir d’une combinaison de :
+
+- perturbation temps réel (logging)
+- excitation trop agressive (chirp)
+- suppression des sécurités
