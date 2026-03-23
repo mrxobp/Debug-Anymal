@@ -1,22 +1,20 @@
-# 📄 README — Oscillator Controller & Incident
+# 📄 README — OscillatorController & Incident
 
 ---
 
 ## 🔎 1. Description
 
-Ce README contient :
+This README contains:
 
-- les modifications apportées au OscillatorController
-- la procédure de déploiement réel
-- le déroulement de l’incident
+- the modifications applied to the OscillatorController  
+- the real deployment procedure  
+- the incident description  
 
 ---
 
 ## ⚙️ 2. Modifications
 
-Les modifications sont organisées selon les blocs du fichier :
-
-OscillatorController.cpp
+The modifications are organized according to the blocks of the OscillatorController.cpp file:
 
 1. CREATION OF CONTROLLER  
 2. INITIALIZATION  
@@ -31,49 +29,41 @@ OscillatorController.cpp
 
 ### 2.1 — CREATION OF CONTROLLER
 
-Suppression des checks :
+Removal of checks: StateStatusCheck & BaseStateCheck  
 
-StateStatusCheck  
-BaseStateCheck  
-
-Code supprimé :
+Removed code:
 
 getInitialStateChecker().addStateCheck("stateStatus", ...);  
 getStateChecker().addStateCheck("baseState", ...);  
 
-Raison :
+Reason:
 
-Le contrôleur ne démarrait pas lorsque le robot est suspendu.  
-Les oscillations sont lancées dans cette configuration.
-
-⚠️ Le contrôleur peut maintenant démarrer sans vérification complète.
+The controller was not starting when the robot is suspended.  
+Oscillations are launched in this configuration.
 
 ---
 
 ### 2.2 — INITIALIZATION
 
-Ajouts :
+Additions: gotoDefaultStartPos_  & gotoDefaultTargetPos_  
 
-gotoDefaultStartPos_  
-gotoDefaultTargetPos_  
+Allows defining a starting pose before oscillation.
 
-Permet de définir une pose de départ avant oscillation.
+CSV logging added with:
 
-Logging CSV ajouté avec :
-
-- temps t  
+- time t  
 - dt  
 - chirp  
-- positions mesurées  
-- positions désirées  
+- measured positions  
+- desired positions  
 
 ---
 
 ### 2.3 — ADVANCE LOOP
 
-- écriture CSV dans la boucle  
-- gestion du reset  
-- initialisation première itération + GoToDefault  
+- CSV writing inside the loop  
+- reset handling  
+- first iteration initialization + GoToDefault  
 
 ---
 
@@ -81,7 +71,7 @@ Logging CSV ajouté avec :
 
 setJointsCommand(dt)
 
-Choix entre :
+Choice between:
 
 - default  
 - sinus  
@@ -91,104 +81,70 @@ Choix entre :
 
 ### 2.5 — OSCILLATION
 
-Sinus : JointsOscillation()  
-Chirp : calculateOscillationPACE()  
-
-0.1 → 2 Hz sur 20 s
+Sinus: JointsOscillation()  
+Chirp: calculateOscillationPACE()  0.1 → 2 Hz over 20 s  
 
 ---
 
 ### 2.6 — DEFAULT
 
-GoToDefault
-
-Interpolation vers pose cible
+GoToDefault: interpolation toward target pose  
 
 ---
 
 ### 2.7 — MOTION CONTROL MANAGER
 
-Suppression des autres modes  
-Conservation de oscillate
+Removal of other modes  
+Keeping only oscillate  
 
 ---
 
 ### 2.8 — AUXILIARY METHODS
 
-Ajout variables (logging, reset, etc.)
+Nothing  
 
 ---
 
-## 🚀 3. Procédure
+## 🚀 3. Procedure
 
-1. Allumer robot  
+1. Power on robot  
 2. WiFi  
-3. SSH  
-4. Compiler controller  
+3. SSH LPC  
+4. Compile controller  
 5. ANYmal Software Launcher  
-6. Lever puis reposer  
-7. Suspendre robot  
-8. Manager :
+6. Lift then lower  
+7. Suspend robot  
+8. Manager:
    - reset  
    - manual play  
    - oscillator  
 
-Version : 25.09
+Version: 25.09  
 
 ---
 
 ## ⚠️ 4. Incident
 
-Avant :
+Before (working deployment):
 
-- sans CSV  
+- no CSV  
 - sinus  
-- stable  
 
-Après :
+Modification just before crash:
 
-- CSV  
+- CSV added  
 - chirp  
 
-Résultat :
+Result:
 
-- tremblement immédiat  
-- pas de default  
+- immediate trembling  
+- no default  
 - shutdown ~3s  
 
 ---
 
-## ❗ 5. Points anormaux
+## ❗ 5. Abnormal points
 
-- CSV ne devrait pas impacter  
-- chirp proche sinus  
-- mais comportement instable  
-
----
-
-## 🧠 6. Hypothèses
-
-H1 : logging perturbe timing  
-H2 : chirp trop agressif  
-H3 : sécurités supprimées  
-H4 : bug GoToDefault  
-
----
-
-## ❓ 7. Questions
-
-- logging OK dans advance ?  
-- limites fréquence ?  
-- gains adaptés ?  
-- GoToDefault bypass ?  
-- cause shutdown ?  
-
----
-
-## 🧾 8. Conclusion
-
-Problème probablement dû à :
-
-- timing  
-- chirp  
-- sécurité supprimée
+- CSV should not impact since it only logs positions, but maybe writing the file in /tmp is not allowed by the LPC  
+- chirp close to sinus because we limit to 2 Hz max  
+- The robot started trembling strongly for 3 seconds and shut down immediately (battery cut), as if two controllers were running simultaneously  
